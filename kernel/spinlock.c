@@ -22,13 +22,14 @@ void
 acquire(struct spinlock *lk)
 {
   push_off(); // disable interrupts to avoid deadlock.
-  if(holding(lk))
+  if(holding(lk))   //如果锁被锁住， 直接报错
     panic("acquire");
 
   // On RISC-V, sync_lock_test_and_set turns into an atomic swap:
   //   a5 = 1
   //   s1 = &lk->locked
-  //   amoswap.w.aq a5, a5, (s1)
+  //   amoswap.w.aq a5, a5, (s1)  物理层提供的原子操作加锁
+  // 该函数返回的是旧的值， 如果旧的值为0， 则说明加锁成功了  （物理实现原子操作）
   while(__sync_lock_test_and_set(&lk->locked, 1) != 0)
     ;
 
@@ -46,7 +47,7 @@ acquire(struct spinlock *lk)
 void
 release(struct spinlock *lk)
 {
-  if(!holding(lk))
+  if(!holding(lk))    //  如果锁没有被锁住， 直接报错
     panic("release");
 
   lk->cpu = 0;
@@ -65,8 +66,8 @@ release(struct spinlock *lk)
   // multiple store instructions.
   // On RISC-V, sync_lock_release turns into an atomic swap:
   //   s1 = &lk->locked
-  //   amoswap.w zero, zero, (s1)
-  __sync_lock_release(&lk->locked);
+  //   amoswap.w zero, zero, (s1) 
+  __sync_lock_release(&lk->locked);   //原子释放锁
 
   pop_off();
 }
@@ -84,7 +85,7 @@ holding(struct spinlock *lk)
 // push_off/pop_off are like intr_off()/intr_on() except that they are matched:
 // it takes two pop_off()s to undo two push_off()s.  Also, if interrupts
 // are initially off, then push_off, pop_off leaves them off.
-
+// 关闭终端， 避免死锁
 void
 push_off(void)
 {

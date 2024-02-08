@@ -80,6 +80,7 @@ runcmd(struct cmd *cmd)
     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
 
+  // 重定向
   case REDIR:
     rcmd = (struct redircmd*)cmd;
     close(rcmd->fd);
@@ -98,6 +99,7 @@ runcmd(struct cmd *cmd)
     runcmd(lcmd->right);
     break;
 
+  // 管道通信
   case PIPE:
     pcmd = (struct pipecmd*)cmd;
     if(pipe(p) < 0)
@@ -148,7 +150,7 @@ main(void)
   static char buf[100];
   int fd;
 
-  // Ensure that three file descriptors are open.
+  // Ensure that three file descriptors are open. 确保始终至少有三个fd，读、写、错误
   while((fd = open("console", O_RDWR)) >= 0){
     if(fd >= 3){
       close(fd);
@@ -156,6 +158,7 @@ main(void)
     }
   }
 
+  // 内置的cd 命令
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
@@ -165,6 +168,7 @@ main(void)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
     }
+    //fork一个子进程， 子进程更改工作目录
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(0);

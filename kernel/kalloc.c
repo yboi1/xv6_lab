@@ -17,7 +17,7 @@ extern char end[]; // first address after kernel.
 struct run {
   struct run *next;
 };
-
+//kmem.freelist 是一个可用的页表空间链表	将其的头节点作为分配的内存返回
 struct {
   struct spinlock lock;
   struct run *freelist;
@@ -42,7 +42,7 @@ freerange(void *pa_start, void *pa_end)
 // Free the page of physical memory pointed at by v,
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
-// initializing the allocator; see kinit above.)
+// initializing the allocator; see kinit above.)  将一个内存页面添加到空闲列表
 void
 kfree(void *pa)
 {
@@ -71,7 +71,7 @@ kalloc(void)
   struct run *r;
 
   acquire(&kmem.lock);
-  r = kmem.freelist;
+  r = kmem.freelist;  //kmem.freelist 是一个可用的页表空间链表	将其的头节点作为分配的内存返回
   if(r)
     kmem.freelist = r->next;
   release(&kmem.lock);

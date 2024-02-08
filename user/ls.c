@@ -3,6 +3,7 @@
 #include "user/user.h"
 #include "kernel/fs.h"
 
+// 命名规范？
 char*
 fmtname(char *path)
 {
@@ -41,11 +42,13 @@ ls(char *path)
     return;
   }
 
+  // 根据文件类型做出策略
   switch(st.type){
   case T_FILE:
     printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
     break;
 
+  // 如果是目录， 则将目录下出现的文件名都打印
   case T_DIR:
     if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
       printf("ls: path too long\n");

@@ -4,6 +4,6 @@ struct spinlock {
 
   // For debugging:
   char *name;        // Name of lock.
-  struct cpu *cpu;   // The cpu holding the lock.
+  struct cpu *cpu;   // The cpu holding the lock.   锁主人的信息
 };
 

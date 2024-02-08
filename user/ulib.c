@@ -43,6 +43,7 @@ memset(void *dst, int c, uint n)
   return dst;
 }
 
+// 返回的第一个出现的位置
 char*
 strchr(const char *s, char c)
 {
