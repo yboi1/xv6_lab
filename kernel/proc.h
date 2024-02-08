@@ -20,10 +20,10 @@ struct context {
 
 // Per-CPU state.
 struct cpu {
-  struct proc *proc;          // The process running on this cpu, or null.
-  struct context context;     // swtch() here to enter scheduler().
-  int noff;                   // Depth of push_off() nesting.
-  int intena;                 // Were interrupts enabled before push_off()?
+  struct proc *proc;          // The process running on this cpu, or null. 该CPU上运行的进程
+  struct context context;     // swtch() here to enter scheduler(). 保存上下文消息用于调换
+  int noff;                   // Depth of push_off() nesting. 内核中关闭中断，避免竞争
+  int intena;                 // Were interrupts enabled before push_off()? 记录中断的状态
 };
 
 extern struct cpu cpus[NCPU];
@@ -84,23 +84,23 @@ enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
-  struct spinlock lock;
+  struct spinlock lock;   // 自旋锁保证睡眠锁的正常进行
 
   // p->lock must be held when using these:
-  enum procstate state;        // Process state
-  struct proc *parent;         // Parent process
-  void *chan;                  // If non-zero, sleeping on chan
-  int killed;                  // If non-zero, have been killed
-  int xstate;                  // Exit status to be returned to parent's wait
-  int pid;                     // Process ID
+  enum procstate state;        // Process state 进程的状态
+  struct proc *parent;         // Parent process  父进程
+  void *chan;                  // If non-zero, sleeping on chan 如果不为零表示正在等一个特定的通道
+  int killed;                  // If non-zero, have been killed 如果不为零， 表示已经被杀死
+  int xstate;                  // Exit status to be returned to parent's wait 返回给父进程的等待状态
+  int pid;                     // Process ID  进程ID
 
   // these are private to the process, so p->lock need not be held.
-  uint64 kstack;               // Virtual address of kernel stack
-  uint64 sz;                   // Size of process memory (bytes)
-  pagetable_t pagetable;       // User page table
-  struct trapframe *trapframe; // data page for trampoline.S
-  struct context context;      // swtch() here to run process
-  struct file *ofile[NOFILE];  // Open files
-  struct inode *cwd;           // Current directory
-  char name[16];               // Process name (debugging)
+  uint64 kstack;               // Virtual address of kernel stack 内核栈虚拟地址，用于上下文切换
+  uint64 sz;                   // Size of process memory (bytes)  进程内存的大小
+  pagetable_t pagetable;       // User page table 用户页表
+  struct trapframe *trapframe; // data page for trampoline.S  保存进程的中断帧
+  struct context context;      // swtch() here to run process 用于上下文切换
+  struct file *ofile[NOFILE];  // Open files  记录已经打开的文件
+  struct inode *cwd;           // Current directory 当前工作目录的指针
+  char name[16];               // Process name (debugging)  进程的名称， debug使用
 };

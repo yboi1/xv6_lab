@@ -105,7 +105,7 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 
-// swtch.S
+// swtch.S  用于上下文切换      保存旧的上下文， 读取新的上下文 返回的是ra寄存器，保存的是调用该函数的地址
 void            swtch(struct context*, struct context*);
 
 // spinlock.c

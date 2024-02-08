@@ -485,7 +485,7 @@ scheduler(void)
     }
     if(found == 0) {
       intr_on();
-      asm volatile("wfi");
+      asm volatile("wfi");    // wait for interrupte 
     }
   }
 }
@@ -503,7 +503,7 @@ sched(void)
   int intena;
   struct proc *p = myproc();
 
-  if(!holding(&p->lock))
+  if(!holding(&p->lock))    // p->lock->locked && p->lock->cpu == mycpu()
     panic("sched p->lock");
   if(mycpu()->noff != 1)
     panic("sched locks");
@@ -524,7 +524,7 @@ yield(void)
   struct proc *p = myproc();
   acquire(&p->lock);
   p->state = RUNNABLE;
-  sched();
+  sched();    // 将自己的CPU让出
   release(&p->lock);
 }
 

@@ -128,7 +128,7 @@ consoleread(int user_dst, uint64 dst, int n)
   return target - n;
 }
 
-//
+// 处理键入字符的中断例程
 // the console input interrupt handler.
 // uartintr() calls this for input character.
 // do erase/kill processing, append to cons.buf,

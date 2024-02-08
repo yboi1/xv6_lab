@@ -58,7 +58,7 @@ release(struct spinlock *lk)
   // and that loads in the critical section occur strictly before
   // the lock is released.
   // On RISC-V, this emits a fence instruction.
-  __sync_synchronize();
+  __sync_synchronize();   // 内存障碍， 防止编译器优化造成数据冲突
 
   // Release the lock, equivalent to lk->locked = 0.
   // This code doesn't use a C assignment, since the C standard
@@ -85,18 +85,18 @@ holding(struct spinlock *lk)
 // push_off/pop_off are like intr_off()/intr_on() except that they are matched:
 // it takes two pop_off()s to undo two push_off()s.  Also, if interrupts
 // are initially off, then push_off, pop_off leaves them off.
-// 关闭终端， 避免死锁
+// 加一层嵌套
 void
 push_off(void)
 {
-  int old = intr_get();
+  int old = intr_get(); // riscv的指令，用于禁用中断
 
   intr_off();
   if(mycpu()->noff == 0)
     mycpu()->intena = old;
   mycpu()->noff += 1;
 }
-
+// 减一层嵌套
 void
 pop_off(void)
 {
@@ -107,5 +107,5 @@ pop_off(void)
     panic("pop_off");
   c->noff -= 1;
   if(c->noff == 0 && c->intena)
-    intr_on();
+    intr_on();  // riscv的指令，用于允许中断
 }
