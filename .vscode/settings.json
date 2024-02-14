@@ -2,6 +2,18 @@
     "files.associations": {
         "*.py": "python",
         "*.java": "java",
-        "riscv.h": "c"
+        "riscv.h": "c",
+        "*.tcc": "c",
+        "exception": "c",
+        "memory_resource": "c",
+        "format": "c",
+        "fstream": "c",
+        "iosfwd": "c",
+        "new": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "stop_token": "c",
+        "streambuf": "c",
+        "*.rh": "c"
     }
 }
