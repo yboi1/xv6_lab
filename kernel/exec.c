@@ -21,9 +21,9 @@ exec(char *path, char **argv)
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
 
-  begin_op();
+  begin_op();     //书写日志
 
-  if((ip = namei(path)) == 0){
+  if((ip = namei(path)) == 0){    // 读取二进制文件
     end_op();
     return -1;
   }
@@ -44,7 +44,7 @@ exec(char *path, char **argv)
       goto bad;
     if(ph.type != ELF_PROG_LOAD)
       continue;
-    if(ph.memsz < ph.filesz)
+    if(ph.memsz < ph.filesz)    // 判断分配的内存是否足够
       goto bad;
     if(ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
@@ -54,7 +54,7 @@ exec(char *path, char **argv)
     sz = sz1;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
-    if(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) < 0)
+    if(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) < 0)   // 写入elf文件
       goto bad;
   }
   iunlockput(ip);
@@ -65,7 +65,7 @@ exec(char *path, char **argv)
   uint64 oldsz = p->sz;
 
   // Allocate two pages at the next page boundary.
-  // Use the second as the user stack.
+  // Use the second as the user stack.    分配一个栈页面
   sz = PGROUNDUP(sz);
   uint64 sz1;
   if((sz1 = uvmalloc(pagetable, sz, sz + 2*PGSIZE)) == 0)

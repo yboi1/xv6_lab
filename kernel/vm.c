@@ -14,7 +14,7 @@ pagetable_t kernel_pagetable;
 extern char etext[];  // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
-
+  //=======kvm开头对内核页表操作  uvm对用户页表操作==============
 /*
  * create a direct-map page table for the kernel.
  */
@@ -43,14 +43,15 @@ kvminit()
   kvmmap((uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);
 
   // map the trampoline for trap entry/exit to
-  // the highest virtual address in the kernel.
+  // the highest virtual address in the kernel.   最顶层
   kvmmap(TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
 }
 
 // Switch h/w page table register to the kernel's page table,
-// and enable paging.
+// and enable paging.   安装内核页表
 void
-kvminithart()
+
+()
 {
   w_satp(MAKE_SATP(kernel_pagetable));
   sfence_vma();
@@ -144,25 +145,25 @@ kvmpa(uint64 va)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned. Returns 0 on success, -1 if walk() couldn't
-// allocate a needed page-table page.
+// allocate a needed page-table page.   对三层页表进行映射
 int
 mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 {
   uint64 a, last;
   pte_t *pte;
 
-  a = PGROUNDDOWN(va);    // 将虚拟地址 va 向下舍入到页面边界
+  a = PGROUNDDOWN(va);                        // 将虚拟地址 va 向下舍入到页面边界
   last = PGROUNDDOWN(va + size - 1);
   for(;;){
     if((pte = walk(pagetable, a, 1)) == 0)    // 通过walk函数查询对应的页表项是否能被找到 感觉在哪里学过
       return -1;
-    if(*pte & PTE_V)  // 判断标志位， 确认是否已经被映射
+    if(*pte & PTE_V)                          // 判断标志位， 确认是否已经被映射
       panic("remap");
-    *pte = PA2PTE(pa) | perm | PTE_V;   // 将pa转换为页表项格式， 设置perm权限， 将映射为标志为1
-    if(a == last)   //判断是否为最后一页
+    *pte = PA2PTE(pa) | perm | PTE_V;         // 将pa转换为页表项格式， 设置perm权限， 将映射为标志为1
+    if(a == last)                             //判断是否为最后一页
       break;
     a += PGSIZE;
-    pa += PGSIZE;   // 增加地址， 处理下一页
+    pa += PGSIZE;                             // 增加地址， 处理下一页
   }
   return 0;
 }

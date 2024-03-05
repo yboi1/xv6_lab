@@ -233,7 +233,7 @@ userinit(void)
   release(&p->lock);
 }   // goto user/init.c 15 
 
-// Grow or shrink user memory by n bytes.
+// Grow or shrink user memory by n bytes.   sbrk的函数实现
 // Return 0 on success, -1 on failure.
 int
 growproc(int n)

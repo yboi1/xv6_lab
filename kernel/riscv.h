@@ -323,7 +323,7 @@ sfence_vma()
 #define PGSIZE 4096 // bytes per page
 #define PGSHIFT 12  // bits of offset within a page
 
-#define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
+#define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))    // 确保页表的对其， 只使用4096的倍数
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))    // 将虚拟地址向下舍入到页面边界
 
 #define PTE_V (1L << 0) // valid
@@ -348,7 +348,7 @@ sfence_vma()
 // MAXVA is actually one bit less than the max allowed by
 // Sv39, to avoid having to sign-extend virtual addresses
 // that have the high bit set.
-#define MAXVA (1L << (9 + 9 + 9 + 12 - 1))    //2^38-1 虚拟地址的最大位置
+#define MAXVA (1L << (9 + 9 + 9 + 12 - 1))    //2^38-1 用户虚拟地址的最大位置
 
 typedef uint64 pte_t;
 typedef uint64 *pagetable_t; // 512 PTEs

@@ -1,6 +1,6 @@
 // Format of an ELF executable file
-
-#define ELF_MAGIC 0x464C457FU  // "\x7FELF" in little endian
+// 检验二进制格式是否良好
+#define ELF_MAGIC 0x464C457FU  // "\x7FELF" in little endian  
 
 // File header
 struct elfhdr {

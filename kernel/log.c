@@ -121,19 +121,19 @@ recover_from_log(void)
   write_head(); // clear the log
 }
 
-// called at the start of each FS system call.
+// called at the start of each FS system call.  添加日志
 void
 begin_op(void)
 {
   acquire(&log.lock);
   while(1){
-    if(log.committing){
+    if(log.committing){         //判断是否有日志正在提交
       sleep(&log, &log.lock);
-    } else if(log.lh.n + (log.outstanding+1)*MAXOPBLOCKS > LOGSIZE){
+    } else if(log.lh.n + (log.outstanding+1)*MAXOPBLOCKS > LOGSIZE){  //判断日志空间是否足够
       // this op might exhaust log space; wait for commit.
       sleep(&log, &log.lock);
     } else {
-      log.outstanding += 1;
+      log.outstanding += 1;     // 日志提交 +1
       release(&log.lock);
       break;
     }
