@@ -38,7 +38,7 @@ w_mepc(uint64 x)
   asm volatile("csrw mepc, %0" : : "r" (x));
 }
 
-// Supervisor Status Register, sstatus
+// Supervisor Status Register, sstatus： SIE位控制 中断是否启用
 
 #define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User
 #define SSTATUS_SPIE (1L << 5) // Supervisor Previous Interrupt Enable
@@ -113,7 +113,7 @@ w_mie(uint64 x)
 
 // machine exception program counter, holds the
 // instruction address to which a return from
-// exception will go.
+// exception will go.     保存程序计数器pc
 static inline void 
 w_sepc(uint64 x)
 {
@@ -142,7 +142,7 @@ w_medeleg(uint64 x)
 {
   asm volatile("csrw medeleg, %0" : : "r" (x));
 }
-
+// mideleg寄存器用于控制将中断委托给处理器所运行的更低特权级别的目标。
 // Machine Interrupt Delegation
 static inline uint64
 r_mideleg()
@@ -159,7 +159,7 @@ w_mideleg(uint64 x)
 }
 
 // Supervisor Trap-Vector Base Address
-// low two bits are mode.
+// low two bits are mode.     写入陷阱处理程序的地址， risc-v 跳转到地址处理陷阱
 static inline void 
 w_stvec(uint64 x)
 {
@@ -201,7 +201,7 @@ r_satp()
   asm volatile("csrr %0, satp" : "=r" (x) );
   return x;
 }
-
+// 内核在这里放置一个值， 这个值在陷阱处理程序开始就会派上用场
 // Supervisor Scratch register, for early trap handler in trampoline.S.
 static inline void 
 w_sscratch(uint64 x)
@@ -215,7 +215,7 @@ w_mscratch(uint64 x)
   asm volatile("csrw mscratch, %0" : : "r" (x));
 }
 
-// Supervisor Trap Cause
+// Supervisor Trap Cause    设置一个描述陷阱的数字
 static inline uint64
 r_scause()
 {
