@@ -95,3 +95,20 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// trace系统调用
+uint64 
+sys_trace(void)
+{
+  int n;
+  if(argint(0, &n) < 0)
+    return -1;
+
+  for(int i = 0; i < 32; ++i){
+    if(n & (1<<i)){
+      myproc()->nTra[i] = 1;
+    }
+  }
+  
+  return 0;
+}

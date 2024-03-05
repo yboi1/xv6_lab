@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "defs.h"
 
+#define SY_NUM 32
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -295,6 +297,11 @@ fork(void)
 
   np->state = RUNNABLE;
 
+  // 拷贝trace的数组
+  for(int i = 0; i < SY_NUM; i++){
+    np->nTra[i] = p->nTra[i];
+  }
+
   release(&np->lock);
 
   return pid;
@@ -333,6 +340,10 @@ void
 exit(int status)
 {
   struct proc *p = myproc();
+
+  for(int i = 0; i < 32; ++i){
+    p->nTra[i]=0;
+  }
 
   if(p == initproc)
     panic("init exiting");
