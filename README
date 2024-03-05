@@ -1,1 +1,18 @@
-the two caphter of xv6_syscall! 
+为xv-6 添加系统调用的方法：
+    1·  将$U/_sysinfotest添加到 Makefile 中的 UPROGS
+    2·  添加usys.pl 中的entry
+    3·  在kernel/syscall.h  中添加一个描述字符
+    4·  在kernel/syscall.c  中添加系统调用的细节
+    5·  在kernel/sysproc.c  中实现函数
+
+lab 1:  trace
+    实现细节：  
+        通过添加标志位， 当syscall函数执行时, 判断是否为目标系统调用    
+        只需添加一个数组即可完成确认：  好像可以通过但数字直接确认
+
+lab 2:  sysinfo
+    实现细节：
+        通过空页表的链表来统计可用内存的大小
+        通过proc的数组来实现对proc的计数
+
+2024.3.5
