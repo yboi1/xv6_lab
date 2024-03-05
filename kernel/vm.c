@@ -151,18 +151,18 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
   uint64 a, last;
   pte_t *pte;
 
-  a = PGROUNDDOWN(va);
+  a = PGROUNDDOWN(va);    // 将虚拟地址 va 向下舍入到页面边界
   last = PGROUNDDOWN(va + size - 1);
   for(;;){
-    if((pte = walk(pagetable, a, 1)) == 0)
+    if((pte = walk(pagetable, a, 1)) == 0)    // 通过walk函数查询对应的页表项是否能被找到 感觉在哪里学过
       return -1;
-    if(*pte & PTE_V)
+    if(*pte & PTE_V)  // 判断标志位， 确认是否已经被映射
       panic("remap");
-    *pte = PA2PTE(pa) | perm | PTE_V;
-    if(a == last)
+    *pte = PA2PTE(pa) | perm | PTE_V;   // 将pa转换为页表项格式， 设置perm权限， 将映射为标志为1
+    if(a == last)   //判断是否为最后一页
       break;
     a += PGSIZE;
-    pa += PGSIZE;
+    pa += PGSIZE;   // 增加地址， 处理下一页
   }
   return 0;
 }
@@ -209,7 +209,7 @@ uvmcreate()
 
 // Load the user initcode into address 0 of pagetable,
 // for the very first process.
-// sz must be less than a page.
+// sz must be less than a page. 分配一个物理页表， 然后将物理页表进行转化为虚拟地址
 void
 uvminit(pagetable_t pagetable, uchar *src, uint sz)
 {

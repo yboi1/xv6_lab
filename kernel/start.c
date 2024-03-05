@@ -30,24 +30,24 @@ start()
   // requires gcc -mcmodel=medany
   w_mepc((uint64)main);
 
-  // disable paging for now.
+  // disable paging for now.  
   w_satp(0);
 
   // delegate all interrupts and exceptions to supervisor mode.
   w_medeleg(0xffff);
-  w_mideleg(0xffff);
+  w_mideleg(0xffff);    // 外部中断（SEIE）、定时器中断（STIE）和软件中断（SSIE）
   w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
-  // ask for clock interrupts.
+  // ask for clock interrupts.    对时钟芯片进行编程以产生计时器中断
   timerinit();
 
   // keep each CPU's hartid in its tp register, for cpuid().
   int id = r_mhartid();
-  w_tp(id);
+  w_tp(id);   // tp 为线程ID
 
   // switch to supervisor mode and jump to main().
   asm volatile("mret");
-}
+}   // To proc.c 212
 
 // set up to receive timer interrupts in machine mode,
 // which arrive at timervec in kernelvec.S,

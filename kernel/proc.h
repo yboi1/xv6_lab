@@ -42,12 +42,12 @@ extern struct cpu cpus[NCPU];
 // return-to-user path via usertrapret() doesn't return through
 // the entire kernel call stack.
 struct trapframe {
-  /*   0 */ uint64 kernel_satp;   // kernel page table
-  /*   8 */ uint64 kernel_sp;     // top of process's kernel stack
-  /*  16 */ uint64 kernel_trap;   // usertrap()
-  /*  24 */ uint64 epc;           // saved user program counter
-  /*  32 */ uint64 kernel_hartid; // saved kernel tp
-  /*  40 */ uint64 ra;
+  /*   0 */ uint64 kernel_satp;   // 内核页表的地址
+  /*   8 */ uint64 kernel_sp;     // 进程的内核栈的顶部地址
+  /*  16 */ uint64 kernel_trap;   // usertrap() 处理器陷入内核模式的位置， 用于用户态和内核态的过渡函数
+  /*  24 */ uint64 epc;           // 保存用户程序的程序计数器
+  /*  32 */ uint64 kernel_hartid; // 保存处理器的硬件线程ID
+  /*  40 */ uint64 ra;            // 下面的寄存器为通用寄存器，用于保存处理器的上下文信息
   /*  48 */ uint64 sp;
   /*  56 */ uint64 gp;
   /*  64 */ uint64 tp;
@@ -87,20 +87,20 @@ struct proc {
   struct spinlock lock;   // 自旋锁保证睡眠锁的正常进行
 
   // p->lock must be held when using these:
-  enum procstate state;        // Process state 进程的状态
-  struct proc *parent;         // Parent process  父进程
-  void *chan;                  // If non-zero, sleeping on chan 如果不为零表示正在等一个特定的通道
-  int killed;                  // If non-zero, have been killed 如果不为零， 表示已经被杀死
-  int xstate;                  // Exit status to be returned to parent's wait 返回给父进程的等待状态
-  int pid;                     // Process ID  进程ID
+  enum procstate state;        // 进程的状态
+  struct proc *parent;         // 父进程
+  void *chan;                  // 如果不为零表示正在等一个特定的通道
+  int killed;                  // 如果不为零， 表示已经被杀死
+  int xstate;                  // 返回给父进程的等待状态
+  int pid;                     // 进程ID
 
   // these are private to the process, so p->lock need not be held.
-  uint64 kstack;               // Virtual address of kernel stack 内核栈虚拟地址，用于上下文切换
-  uint64 sz;                   // Size of process memory (bytes)  进程内存的大小
-  pagetable_t pagetable;       // User page table 用户页表
-  struct trapframe *trapframe; // data page for trampoline.S  保存进程的中断帧
-  struct context context;      // swtch() here to run process 用于上下文切换
-  struct file *ofile[NOFILE];  // Open files  记录已经打开的文件
-  struct inode *cwd;           // Current directory 当前工作目录的指针
-  char name[16];               // Process name (debugging)  进程的名称， debug使用
+  uint64 kstack;               // 内核栈虚拟地址，用于上下文切换
+  uint64 sz;                   // 进程内存的大小（bytes）
+  pagetable_t pagetable;       // 用户页表
+  struct trapframe *trapframe; // 保存进程的中断帧
+  struct context context;      // 用于上下文切换
+  struct file *ofile[NOFILE];  // 记录已经打开的文件
+  struct inode *cwd;           // 当前工作目录的指针
+  char name[16];               // 进程的名称， debug使用
 };

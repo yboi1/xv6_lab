@@ -31,7 +31,7 @@ w_mstatus(uint64 x)
 
 // machine exception program counter, holds the
 // instruction address to which a return from
-// exception will go.
+// exception will go. // %0是一个占位符，表示在内联汇编中使用的第一个输入操作数（在这种情况下，对应于C语言变量x）。
 static inline void 
 w_mepc(uint64 x)
 {
@@ -86,7 +86,7 @@ r_sie()
   asm volatile("csrr %0, sie" : "=r" (x) );
   return x;
 }
-
+// sie寄存器用于启用或禁用监管者模式下的中断
 static inline void 
 w_sie(uint64 x)
 {
@@ -136,7 +136,7 @@ r_medeleg()
   asm volatile("csrr %0, medeleg" : "=r" (x) );
   return x;
 }
-
+// medeleg寄存器用于控制将异常委托给处理器所运行的更低特权级别的目标。
 static inline void 
 w_medeleg(uint64 x)
 {
@@ -187,9 +187,9 @@ w_mtvec(uint64 x)
 #define MAKE_SATP(pagetable) (SATP_SV39 | (((uint64)pagetable) >> 12))
 
 // supervisor address translation and protection;
-// holds the address of the page table.
+// holds the address of the page table.   satp寄存器  用于保存管理页表的基址以及页表的配置
 static inline void 
-w_satp(uint64 x)
+w_satp(uint64 x)  
 {
   asm volatile("csrw satp, %0" : : "r" (x));
 }
@@ -324,7 +324,7 @@ sfence_vma()
 #define PGSHIFT 12  // bits of offset within a page
 
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
-#define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
+#define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))    // 将虚拟地址向下舍入到页面边界
 
 #define PTE_V (1L << 0) // valid
 #define PTE_R (1L << 1)
@@ -333,7 +333,7 @@ sfence_vma()
 #define PTE_U (1L << 4) // 1 -> user can access
 
 // shift a physical address to the right place for a PTE.
-#define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)
+#define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)   // 将物理地址转换为页表项格式
 
 #define PTE2PA(pte) (((pte) >> 10) << 12)
 
@@ -348,7 +348,7 @@ sfence_vma()
 // MAXVA is actually one bit less than the max allowed by
 // Sv39, to avoid having to sign-extend virtual addresses
 // that have the high bit set.
-#define MAXVA (1L << (9 + 9 + 9 + 12 - 1))
+#define MAXVA (1L << (9 + 9 + 9 + 12 - 1))    //2^38-1 虚拟地址的最大位置
 
 typedef uint64 pte_t;
 typedef uint64 *pagetable_t; // 512 PTEs

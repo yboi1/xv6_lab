@@ -35,10 +35,10 @@ memmove(void *dst, const void *src, uint n)
 
   s = src;
   d = dst;
-  if(s < d && s + n > d){
+  if(s < d && s + n > d){   // 判断是否有区域的重叠
     s += n;
     d += n;
-    while(n-- > 0)
+    while(n-- > 0)   
       *--d = *--s;
   } else
     while(n-- > 0)

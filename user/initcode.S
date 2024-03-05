@@ -3,7 +3,7 @@
 
 #include "syscall.h"
 
-# exec(init, argv)
+# exec(init, argv)        调用函数重新进入内核
 .globl start
 start:
         la a0, init

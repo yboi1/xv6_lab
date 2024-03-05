@@ -24,7 +24,7 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
-    printf("init: starting sh\n");
+    printf("init: starting sh\n");    printf("well come Boyi`s xv-6\n\n");
     pid = fork();
     if(pid < 0){
       printf("init: fork failed\n");
@@ -34,7 +34,7 @@ main(void)
       exec("sh", argv);
       printf("init: exec sh failed\n");
       exit(1);
-    }
+    }   // 至此，shell已经成功启动！
 
     for(;;){
       // this call to wait() returns if the shell exits,

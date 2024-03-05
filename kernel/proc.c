@@ -222,16 +222,16 @@ userinit(void)
   p->sz = PGSIZE;
 
   // prepare for the very first "return" from kernel to user.
-  p->trapframe->epc = 0;      // user program counter
-  p->trapframe->sp = PGSIZE;  // user stack pointer
+  p->trapframe->epc = 0;      // user program counter   虚拟地址0
+  p->trapframe->sp = PGSIZE;  // user stack pointer   程序的栈指针为内核页表的下面一页
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
-  p->cwd = namei("/");
+  p->cwd = namei("/");    // ===========未追踪=========
 
   p->state = RUNNABLE;
 
   release(&p->lock);
-}
+}   // goto user/init.c 15 
 
 // Grow or shrink user memory by n bytes.
 // Return 0 on success, -1 on failure.

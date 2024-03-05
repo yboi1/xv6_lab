@@ -5,7 +5,7 @@
 #include "defs.h"
 
 volatile static int started = 0;
-
+//  用户态加载的第一段程序
 // start() jumps here in supervisor mode on all CPUs.
 void
 main()
