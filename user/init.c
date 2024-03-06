@@ -17,7 +17,7 @@ main(void)
   int pid, wpid;
 
   if(open("console", O_RDWR) < 0){
-    mknod("console", CONSOLE, 0);
+    mknod("console", CONSOLE, 0);   // 从控制台读取输入
     open("console", O_RDWR);
   }
   dup(0);  // stdout

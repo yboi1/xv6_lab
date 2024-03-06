@@ -52,30 +52,30 @@ start()
 // set up to receive timer interrupts in machine mode,
 // which arrive at timervec in kernelvec.S,
 // which turns them into software interrupts for
-// devintr() in trap.c.
+// devintr() in trap.c.   接受定时器中断
 void
 timerinit()
 {
   // each CPU has a separate source of timer interrupts.
   int id = r_mhartid();
 
-  // ask the CLINT for a timer interrupt.
-  int interval = 1000000; // cycles; about 1/10th second in qemu.
-  *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;
+  // ask the CLINT for a timer interrupt.   
+  int interval = 1000000; // cycles; about 1/10th second in qemu.   约相当于 qemu 中 1/10 秒的时间大
+  *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;    // 针对CLINT编程， 在特定的延迟后生成中断
 
-  // prepare information in scratch[] for timervec.
+  // prepare information in scratch[] for timervec.   设置一个scratch区域， 用于保存寄存器现场和CLINT寄存器的地址
   // scratch[0..3] : space for timervec to save registers.
   // scratch[4] : address of CLINT MTIMECMP register.
   // scratch[5] : desired interval (in cycles) between timer interrupts.
   uint64 *scratch = &mscratch0[32 * id];
-  scratch[4] = CLINT_MTIMECMP(id);
+  scratch[4] = CLINT_MTIMECMP(id);    // 将 CLINT MTIMECMP 寄存器的地址和设置的时间间隔存储到寄存器保存区域中。
   scratch[5] = interval;
-  w_mscratch((uint64)scratch);
+  w_mscratch((uint64)scratch);    // 存储到 CPU 的 mscratch 寄存器
 
-  // set the machine-mode trap handler.
-  w_mtvec((uint64)timervec);
+  // set the machine-mode trap handler.   设置机器模式（Machine Mode）下的中断处理程序的入口地址
+  w_mtvec((uint64)timervec);      // 使定时器可以中断
 
-  // enable machine-mode interrupts.
+  // enable machine-mode interrupts.    MIE位
   w_mstatus(r_mstatus() | MSTATUS_MIE);
 
   // enable machine-mode timer interrupts.

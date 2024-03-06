@@ -52,29 +52,29 @@ void uartstart();
 void
 uartinit(void)
 {
-  // disable interrupts.
+  // disable interrupts. 禁用所有中断
   WriteReg(IER, 0x00);
 
-  // special mode to set baud rate.
+  // special mode to set baud rate.  设置为特殊模式，用于设置波特率
   WriteReg(LCR, LCR_BAUD_LATCH);
 
-  // LSB for baud rate of 38.4K.
+  // LSB for baud rate of 38.4K.  设置波特率的 LSB
   WriteReg(0, 0x03);
 
-  // MSB for baud rate of 38.4K.
+  // MSB for baud rate of 38.4K.  设置波特率的 MSB
   WriteReg(1, 0x00);
 
-  // leave set-baud mode,
+  // leave set-baud mode, 将线路控制寄存器设置为设置字长为 8 位，无奇偶校验位的模式。
   // and set word length to 8 bits, no parity.
   WriteReg(LCR, LCR_EIGHT_BITS);
 
-  // reset and enable FIFOs.
-  WriteReg(FCR, FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
+  // reset and enable FIFOs.  将 FIFO 控制寄存器（FCR，FIFO Control Register）设置为启用 FIFO 并清除 FIFO
+  WriteReg(FCR, FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);    // FIFO（First-In-First-Out）用于缓存串行数据，以提高数据传输效率。
 
-  // enable transmit and receive interrupts.
+  // enable transmit and receive interrupts. 重新启用 UART 中断并启用接收和发送中断
   WriteReg(IER, IER_TX_ENABLE | IER_RX_ENABLE);
 
-  initlock(&uart_tx_lock, "uart");
+  initlock(&uart_tx_lock, "uart");  // 用于保护 UART 的发送操作
 }
 
 // add a character to the output buffer and tell the

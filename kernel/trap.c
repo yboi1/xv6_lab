@@ -42,41 +42,41 @@ usertrap(void)
     panic("usertrap: not from user mode");
 
   // send interrupts and exceptions to kerneltrap(),
-  // since we're now in the kernel.
-  w_stvec((uint64)kernelvec);
+  // since we're now in the kernel.   保证内核中的陷阱由 kernelvec 处理
+  w_stvec((uint64)kernelvec);   
 
   struct proc *p = myproc();
   
-  // save user program counter.
+  // save user program counter.   保存sepc  用户程序计数器 再次保存sepc， 因为可能有进程切换， 防止被覆盖
   p->trapframe->epc = r_sepc();
   
-  if(r_scause() == 8){
+  if(r_scause() == 8){    // 判断是否由系统调用产生
     // system call
 
     if(p->killed)
       exit(-1);
 
-    // sepc points to the ecall instruction,
-    // but we want to return to the next instruction.
-    p->trapframe->epc += 4;
+    // sepc points to the ecall instruction,    
+    // but we want to return to the next instruction.   pc指向下一条指令
+    p->trapframe->epc += 4;   
 
     // an interrupt will change sstatus &c registers,
     // so don't enable until done with those registers.
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  } else if((which_dev = devintr()) != 0){    // 判断是否为设备中断
     // ok
-  } else {      // 当把kalloc和kfree中的锁取消时会触发这个错误
+  } else {      // 当把kalloc和kfree中的锁取消时会触发这个错误  ： 发生异常
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;
   }
 
-  if(p->killed)
+  if(p->killed)     // 判断进程被杀死， 还是需要让出cpu
     exit(-1);
 
-  // give up the CPU if this is a timer interrupt.
+  // give up the CPU if this is a timer interrupt.  计时器中断则让出cpu
   if(which_dev == 2)
     yield();
 
@@ -129,7 +129,7 @@ usertrapret(void)
 }
 
 // interrupts and exceptions from kernel code go here via kernelvec,
-// on whatever the current kernel stack is.
+// on whatever the current kernel stack is.   检查设备中断和异常
 void 
 kerneltrap()
 {
@@ -172,7 +172,7 @@ clockintr()
 // and handle it.
 // returns 2 if timer interrupt,
 // 1 if other device,
-// 0 if not recognized.
+// 0 if not recognized.     驱动程序的中断处理程序
 int
 devintr()
 {
@@ -185,7 +185,7 @@ devintr()
     // irq indicates which device interrupted.
     int irq = plic_claim();
 
-    if(irq == UART0_IRQ){
+    if(irq == UART0_IRQ){   // 判断是否为uart 中断
       uartintr();
     } else if(irq == VIRTIO0_IRQ){
       virtio_disk_intr();
@@ -200,7 +200,7 @@ devintr()
       plic_complete(irq);
 
     return 1;
-  } else if(scause == 0x8000000000000001L){
+  } else if(scause == 0x8000000000000001L){   //判断是否为定时器中断
     // software interrupt from a machine-mode timer interrupt,
     // forwarded by timervec in kernelvec.S.
 

@@ -53,7 +53,7 @@ r_sstatus()
   asm volatile("csrr %0, sstatus" : "=r" (x) );
   return x;
 }
-
+// sstatus用于存储处理器的状态信息和控制标志
 static inline void 
 w_sstatus(uint64 x)
 {

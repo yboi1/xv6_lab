@@ -133,7 +133,7 @@ consoleread(int user_dst, uint64 dst, int n)
 // uartintr() calls this for input character.
 // do erase/kill processing, append to cons.buf,
 // wake up consoleread() if a whole line has arrived.
-//
+//  读取输入， 直到读取一整行后返回
 void
 consoleintr(int c)
 {
@@ -171,7 +171,7 @@ consoleintr(int c)
         // wake up consoleread() if a whole line (or end-of-file)
         // has arrived.
         cons.w = cons.e;
-        wakeup(&cons.r);
+        wakeup(&cons.r);    // 当换行符到达时， 唤醒终端 继续读取
       }
     }
     break;
@@ -185,7 +185,7 @@ consoleinit(void)
 {
   initlock(&cons.lock, "cons");
 
-  uartinit();
+  uartinit();   // 初始化uart设备
 
   // connect read and write system calls
   // to consoleread and consolewrite.
