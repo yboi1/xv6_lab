@@ -46,9 +46,39 @@ kvminit()
   // the highest virtual address in the kernel.
   kvmmap(TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
 }
+  // 内核页表的初始化
+pagetable_t
+kptinit(){
+  pagetable_t k_pagetable;
+  k_pagetable = uvmcreate();
+
+  // uart registers
+  ukvmmap(k_pagetable, UART0, UART0, PGSIZE, PTE_R | PTE_W);
+
+  // virtio mmio disk interface
+  ukvmmap(k_pagetable, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
+
+  // CLINT
+  ukvmmap(k_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+
+  // PLIC
+  ukvmmap(k_pagetable, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
+
+  // map kernel text executable and read-only.
+  ukvmmap(k_pagetable, KERNBASE, KERNBASE, (uint64)etext-KERNBASE, PTE_R | PTE_X);
+
+  // map kernel data and the physical RAM we'll make use of.
+  ukvmmap(k_pagetable, (uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);
+
+  // map the trampoline for trap entry/exit to
+  // the highest virtual address in the kernel.
+  ukvmmap(k_pagetable, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+
+  return k_pagetable;
+}
 
 // Switch h/w page table register to the kernel's page table,
-// and enable paging.
+// and enable paging.   // 将页表切换为用户页表
 void
 kvminithart()
 {
@@ -121,18 +151,42 @@ kvmmap(uint64 va, uint64 pa, uint64 sz, int perm)
     panic("kvmmap");
 }
 
+void
+ukvmmap(pagetable_t k_pagetable, uint64 va, uint64 pa, uint64 sz, int perm)
+{
+  if(mappages(k_pagetable, va, sz, pa, perm) != 0)
+    panic("ukvmmap");
+}
+
 // translate a kernel virtual address to
 // a physical address. only needed for
 // addresses on the stack.
 // assumes va is page aligned.
+// uint64
+// kvmpa(uint64 va)
+// {
+//   uint64 off = va % PGSIZE;
+//   pte_t *pte;
+//   uint64 pa;
+  
+//   pte = walk(kernel_pagetable, va, 0);
+//   if(pte == 0)
+//     panic("kvmpa");
+//   if((*pte & PTE_V) == 0)
+//     panic("kvmpa");
+//   pa = PTE2PA(*pte);
+//   return pa+off;
+// }
+
 uint64
-kvmpa(uint64 va)
+kvmpa(pagetable_t pagetable, uint64 va)
 {
   uint64 off = va % PGSIZE;
   pte_t *pte;
   uint64 pa;
-  
-  pte = walk(kernel_pagetable, va, 0);
+
+  pte = walk(pagetable, va, 0);
+
   if(pte == 0)
     panic("kvmpa");
   if((*pte & PTE_V) == 0)

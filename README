@@ -1,1 +1,13 @@
-the three capter of xv6-page table
+3.7
+lab print pagetable:
+    1· 实现过程与freewalk的原理相同, 遍历整个页表, 遇到子页表则递归 判断条件为该页表
+    是否以及映射
+
+lab kernel pagetable:
+    1· 在proc.h 中添加内核页表成员
+    2· 在vm.c 中实现内核页表初始化函数kptinit(), 由于kvmmap是用于初始化全局页表的,
+    所以我们自己封装一个函数， ukvmmap()来实现对指定页表的初始化
+    3· 在allocproc中实现内核页表的初始化, 及将页表映射到 va地址, 将该地址赋值给p->kstack
+    4· 在schedule中保证进入cpu时切换为内核页表, 出cpu时切换为用户页表
+    5· 实现freeproctable()函数， 首先将页表的映射解除， 然后同freewalk一般,实现对页表的清除
+    6· 更改kvmpa()函数， 使其可以接受pagetable_t 参数， 实现对指定页表的访问, 调用在virtion_disk.c 207行
