@@ -279,6 +279,9 @@ userinit(void)
   uvminit(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
 
+  // 保存映射关系
+  kvmcopyuvm(p->pagetable, p->k_pagetable, 0, PGSIZE);
+
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
   p->trapframe->sp = PGSIZE;  // user stack pointer
@@ -303,9 +306,13 @@ growproc(int n)
   if(n > 0){
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
+    } //内核页表同时改变
+    if(kvmcopyuvm(p->pagetable, p->k_pagetable, sz-n, n) < 0){
+      return -1;
     }
   } else if(n < 0){
-    sz = uvmdealloc(p->pagetable, sz, sz + n);
+    uvmdealloc(p->k_pagetable, sz, sz + n);
+    sz = kvmdealloc(p->pagetable, sz, sz + n);
   }
   p->sz = sz;
   return 0;
@@ -332,6 +339,12 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
+
+  if(kvmcopyuvm(np->pagetable, np->k_pagetable, 0, np->sz) < 0){
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
 
   np->parent = p;
 

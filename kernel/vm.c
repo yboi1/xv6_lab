@@ -5,7 +5,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
-
+// #include "vmcopyin.c"
 /*
  * the kernel's page table.
  */
@@ -58,8 +58,8 @@ kptinit(){
   // virtio mmio disk interface
   ukvmmap(k_pagetable, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
 
-  // CLINT
-  ukvmmap(k_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+  // CLINT    会出现重映射的问题？
+  // ukvmmap(k_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
 
   // PLIC
   ukvmmap(k_pagetable, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
@@ -223,7 +223,7 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 
 // Remove npages of mappings starting from va. va must be
 // page-aligned. The mappings must exist.
-// Optionally free the physical memory.
+// Optionally free the physical memory. 页表， 地址， 页数， 是否释放
 void
 uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 {
@@ -288,6 +288,10 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   if(newsz < oldsz)
     return oldsz;
 
+  // 确保地址不会超过PLIC
+  if(newsz >= PLIC)
+    return 0;
+
   oldsz = PGROUNDUP(oldsz);
   for(a = oldsz; a < newsz; a += PGSIZE){
     mem = kalloc();
@@ -318,6 +322,20 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){
     int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
     uvmunmap(pagetable, PGROUNDUP(newsz), npages, 1);
+  }
+
+  return newsz;
+}
+
+uint64
+kvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
+{
+  if(newsz >= oldsz)
+    return oldsz;
+
+  if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){
+    int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
+    uvmunmap(pagetable, PGROUNDUP(newsz), npages, 0);
   }
 
   return newsz;
@@ -389,6 +407,34 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   return -1;
 }
 
+// 内核的复制页表函数
+int
+u2vmcopy(pagetable_t upagetable, pagetable_t kpagetable, uint64 begin, uint64 end)
+{
+  pte_t *pte;
+  uint64 pa, i;
+  uint flags;
+  uint64 begin_page = PGROUNDUP(begin);
+
+  for(i = begin_page; i < end; i += PGSIZE){
+    if((pte = walk(upagetable, i, 0)) == 0)
+      panic("u2vmcopy: pte should exist");
+    if((*pte & PTE_V) == 0)
+      panic("u2vmcopy: page not present");
+    pa = PTE2PA(*pte);
+    flags = PTE_FLAGS(*pte);
+
+    if(mappages(kpagetable, i, PGSIZE, (uint64)pa, flags) != 0){
+      goto err;
+    }
+  }
+  return 0;
+
+ err:
+  uvmunmap(kpagetable, pa, (i-begin_page) / PGSIZE, 1);
+  return -1;
+}
+
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
 void
@@ -433,23 +479,24 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  uint64 n, va0, pa0;
+  // uint64 n, va0, pa0;
 
-  while(len > 0){
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
-      return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > len)
-      n = len;
-    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+  // while(len > 0){
+  //   va0 = PGROUNDDOWN(srcva);
+  //   pa0 = walkaddr(pagetable, va0);
+  //   if(pa0 == 0)
+  //     return -1;
+  //   n = PGSIZE - (srcva - va0);
+  //   if(n > len)
+  //     n = len;
+  //   memmove(dst, (void *)(pa0 + (srcva - va0)), n);
 
-    len -= n;
-    dst += n;
-    srcva = va0 + PGSIZE;
-  }
-  return 0;
+  //   len -= n;
+  //   dst += n;
+  //   srcva = va0 + PGSIZE;
+  // }
+  // return 0;
+  return copyin_new(pagetable, dst, srcva, len);
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -459,40 +506,41 @@ copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  uint64 n, va0, pa0;
-  int got_null = 0;
+  // uint64 n, va0, pa0;
+  // int got_null = 0;
 
-  while(got_null == 0 && max > 0){
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
-      return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > max)
-      n = max;
+  // while(got_null == 0 && max > 0){
+  //   va0 = PGROUNDDOWN(srcva);
+  //   pa0 = walkaddr(pagetable, va0);
+  //   if(pa0 == 0)
+  //     return -1;
+  //   n = PGSIZE - (srcva - va0);
+  //   if(n > max)
+  //     n = max;
 
-    char *p = (char *) (pa0 + (srcva - va0));
-    while(n > 0){
-      if(*p == '\0'){
-        *dst = '\0';
-        got_null = 1;
-        break;
-      } else {
-        *dst = *p;
-      }
-      --n;
-      --max;
-      p++;
-      dst++;
-    }
+  //   char *p = (char *) (pa0 + (srcva - va0));
+  //   while(n > 0){
+  //     if(*p == '\0'){
+  //       *dst = '\0';
+  //       got_null = 1;
+  //       break;
+  //     } else {
+  //       *dst = *p;
+  //     }
+  //     --n;
+  //     --max;
+  //     p++;
+  //     dst++;
+  //   }
 
-    srcva = va0 + PGSIZE;
-  }
-  if(got_null){
-    return 0;
-  } else {
-    return -1;
-  }
+  //   srcva = va0 + PGSIZE;
+  // }
+  // if(got_null){
+  //   return 0;
+  // } else {
+  //   return -1;
+  // }
+  return copyinstr_new(pagetable, dst, srcva, max);
 }
 
 
@@ -542,3 +590,39 @@ freewalk(pagetable_t pagetable)
 }
 
 */
+
+
+// int
+// kvmcopyuvm(pagetable_t u_pagetable, pagetable_t k_pagetable, uint64 strat, uint64 sz)
+// {
+
+// }
+
+int
+kvmcopyuvm(pagetable_t u_pagetable, pagetable_t k_pagetable, uint64 start, uint64 sz)
+{
+  pte_t *pte;
+  uint64 pa, i, aligned;
+  uint flags;
+
+  // make start page aligned to avoid remap
+  aligned = PGROUNDUP(start);
+
+  for(i = aligned; i < start + sz; i += PGSIZE){
+    if((pte = walk(u_pagetable, i, 0)) == 0)
+      panic("kvmcopyuvm: pte should exist");
+    if((*pte & PTE_V) == 0)
+      panic("kvmcopyuvm: page not present");
+    pa = PTE2PA(*pte);
+    flags = PTE_FLAGS(*pte);
+
+    if(mappages(k_pagetable, i, PGSIZE, pa, flags & ~PTE_U) != 0){
+      goto err;
+    }
+  }
+  return 0;
+
+ err:
+  uvmunmap(k_pagetable, start, (i-start) / PGSIZE, 0);
+  return -1;
+}

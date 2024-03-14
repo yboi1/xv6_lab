@@ -11,3 +11,12 @@ lab kernel pagetable:
     4· 在schedule中保证进入cpu时切换为内核页表, 出cpu时切换为用户页表
     5· 实现freeproctable()函数， 首先将页表的映射解除， 然后同freewalk一般,实现对页表的清除
     6· 更改kvmpa()函数， 使其可以接受pagetable_t 参数， 实现对指定页表的访问, 调用在virtion_disk.c 207行
+
+lab copyin/copyinstr:
+    1· 防止出现重映射的问题， 将CLINT的初始化屏蔽
+    2· 实现函数kvmcopyuvm() 实现将用户页表映射到内核页表
+    3· 实现函数kvmdealloc() 保证取消映射但是不会删除页表
+    4· userinit()的时候保证内核的映射
+    5· fork()的时候保证内核页表的映射
+    6· sbrk()的时候保证内核页表的扩展
+    7· exec()的时候将内核页表转换为新的内核页表
