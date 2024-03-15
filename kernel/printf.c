@@ -117,6 +117,8 @@ printf(char *fmt, ...)
 void
 panic(char *s)
 {
+
+  backtrace();
   pr.locking = 0;
   printf("panic: ");
   printf(s);
@@ -131,4 +133,27 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+void
+backtrace()
+{
+  uint64 ra, fp;
+  printf("backtrace:\n");
+
+  fp = r_fp();
+  while(PGROUNDUP(fp)-PGROUNDDOWN(fp) == PGSIZE){
+    ra = *(uint64 *)(fp-8);
+    fp = *(uint64 *)(fp-16);
+    printf("%p\n", ra);
+  }
+
+  // uint64 start = PGROUNDDOWN(fp);   // 计算页表的顶部
+  // uint64 end = PGROUNDUP(fp);
+
+  // printf("backtrace:\n");
+  // for(uint64 i = start; i < end; i++){
+  //   printf("%x", i);
+  // }
+  exit(0);
 }
